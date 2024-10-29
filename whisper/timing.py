@@ -138,6 +138,38 @@ def dtw_cuda(x, BLOCK_SIZE=1024):
     return backtrace(trace.cpu().numpy())
 
 
+def dtw_hpu(x: torch.Tensor) -> np.ndarray:
+    M, N = x.shape
+
+    # Initialize cost and trace tensors on HPU
+    cost = torch.full((M + 1, N + 1), float("inf"), device="hpu")
+    cost[0, 0] = 0
+    trace = torch.zeros((M + 1, N + 1), dtype=torch.int32, device="hpu")
+
+    # Compute DTW cost matrix
+    for i in range(1, M + 1):
+        for j in range(1, N + 1):
+            c0 = cost[i - 1, j - 1]  # Diagonal
+            c1 = cost[i - 1, j]  # Up
+            c2 = cost[i, j - 1]  # Left
+
+            min_cost = min(c0, c1, c2)
+            cost[i, j] = x[i - 1, j - 1] + min_cost
+
+            # Update trace
+            if min_cost == c0:
+                trace[i, j] = 0  # Diagonal
+            elif min_cost == c1:
+                trace[i, j] = 1  # Up
+            else:
+                trace[i, j] = 2  # Left
+
+    # Backtrace to find the optimal path
+    dtw_path = backtrace(trace.cpu().numpy())
+
+    return dtw_path
+
+
 def dtw(x: torch.Tensor) -> np.ndarray:
     if x.is_cuda:
         try:
