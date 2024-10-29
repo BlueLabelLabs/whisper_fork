@@ -5,7 +5,9 @@ import urllib
 import warnings
 from typing import List, Optional, Union
 
+import habana_frameworks.torch.hpu as hthpu
 import torch
+from habana_frameworks.torch.utils.library_loader import load_habana_module
 from tqdm import tqdm
 
 from .audio import load_audio, log_mel_spectrogram, pad_or_trim
@@ -128,7 +130,18 @@ def load_model(
     """
 
     if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if hthpu.is_available():
+            load_habana_module()
+
+            device = torch.device("hpu")
+            print("Using HPU")
+        elif torch.cuda.is_available():
+            device = torch.device("cuda")
+            print("Using GPU")
+        else:
+            device = torch.device("cpu")
+            print("Using CPU")
+
     if download_root is None:
         default = os.path.join(os.path.expanduser("~"), ".cache")
         download_root = os.path.join(os.getenv("XDG_CACHE_HOME", default), "whisper")
