@@ -100,7 +100,7 @@ def test_median_filter_equivalence(shape):
 @pytest.mark.parametrize("N, M", sizes)
 def test_dtw_hpu_equivalence(N: int, M: int):
     x_numpy = np.random.randn(N, M).astype(np.float32)
-    x_hpu = torch.from_numpy(x_numpy).to('hpu')  # Move to HPU
+    x_hpu = torch.from_numpy(x_numpy).to("hpu")
 
     trace_cpu = dtw_cpu(x_numpy)
     trace_hpu = dtw_hpu(x_hpu)
