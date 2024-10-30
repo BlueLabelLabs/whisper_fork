@@ -153,7 +153,7 @@ def dtw_hpu(x: torch.Tensor) -> np.ndarray:
             c1 = cost[i - 1, j]  # Up
             c2 = cost[i, j - 1]  # Left
 
-            min_cost = min(c0, c1, c2)
+            min_cost = torch.min(torch.min(c0, c1), c2)
             cost[i, j] = x[i - 1, j - 1] + min_cost
 
             # Update trace
@@ -165,9 +165,7 @@ def dtw_hpu(x: torch.Tensor) -> np.ndarray:
                 trace[i, j] = 2  # Left
 
     # Backtrace to find the optimal path
-    dtw_path = backtrace(trace.cpu().numpy())
-
-    return dtw_path
+    return backtrace(trace.cpu().numpy())
 
 
 def dtw(x: torch.Tensor) -> np.ndarray:
