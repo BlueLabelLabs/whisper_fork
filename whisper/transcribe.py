@@ -4,7 +4,6 @@ import traceback
 import warnings
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-import habana_frameworks.torch.hpu as hthpu
 import numpy as np
 import torch
 import tqdm
@@ -129,7 +128,7 @@ def transcribe(
             dtype = torch.float32
 
     if model.device == torch.device("hpu"):
-        if hthpu.is_available():
+        if torch.hpu.is_available():
             warnings.warn("Performing inference on HPU when CUDA is available")
 
     if dtype == torch.float32:
@@ -518,7 +517,7 @@ def cli():
         if device_name == "cuda" and not torch.cuda.is_available():
             warnings.warn("CUDA is not available; using CPU instead")
             device_name = "cpu"
-        if device_name == "hpu" and not hthpu.is_available():
+        if device_name == "hpu" and not torch.hpu.is_available():
             warnings.warn("HPU is not available; using CPU instead")
             device_name = "cpu"
 

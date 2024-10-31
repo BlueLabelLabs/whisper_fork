@@ -5,7 +5,6 @@ import urllib
 import warnings
 from typing import List, Optional, Union
 
-import habana_frameworks.torch.hpu as hthpu
 import torch
 from habana_frameworks.torch.utils.library_loader import load_habana_module
 from tqdm import tqdm
@@ -15,6 +14,11 @@ from .decoding import DecodingOptions, DecodingResult, decode, detect_language
 from .model import ModelDimensions, Whisper
 from .transcribe import transcribe
 from .version import __version__
+
+load_habana_module()  # important to load torch.hpu
+
+if torch.hpu.is_available():
+    from habana_frameworks.torch.hpu import wrap_in_hpu_graph
 
 _MODELS = {
     "tiny.en": "https://openaipublic.azureedge.net/main/whisper/models/d3dd57d32accea0b295c96e26691aa14d8822fac7d9d27d5dc00b4ca2826dd03/tiny.en.pt",
@@ -128,19 +132,11 @@ def load_model(
     model : Whisper
         The Whisper ASR model instance
     """
-
     if device is None:
-        if hthpu.is_available():
-            load_habana_module()
-
-            device = torch.device("hpu")
-            print("Using HPU")
-        elif torch.cuda.is_available():
+        if torch.cuda.is_available() and device == "cuda":
             device = torch.device("cuda")
-            print("Using GPU")
         else:
             device = torch.device("cpu")
-            print("Using CPU")
 
     if download_root is None:
         default = os.path.join(os.path.expanduser("~"), ".cache")
@@ -169,5 +165,8 @@ def load_model(
 
     if alignment_heads is not None:
         model.set_alignment_heads(alignment_heads)
+
+    if torch.hpu.is_available() and device == "hpu":
+        return wrap_in_hpu_graph(model)
 
     return model.to(device)

@@ -4,7 +4,6 @@ import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List
 
-import habana_frameworks.torch.core as htcore
 import numba
 import numpy as np
 import torch
@@ -176,7 +175,7 @@ def dtw_hpu(x, BLOCK_SIZE=1024):
 
 
 def dtw(x: torch.Tensor) -> np.ndarray:
-    if htcore.is_available():
+    if torch.hpu.is_available():
         return dtw_hpu(x)
     if x.is_cuda:
         try:
